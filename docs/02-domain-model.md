@@ -2,103 +2,79 @@
 
 ## Domain Overview
 
-ADNest is a financial management system designed for **two predefined users**.
+ADNest is a simple financial management system designed for **two users sharing a single financial space**.
 
-The domain model represents the core financial entities required to manage:
+The system allows both users to:
 
-* personal expenses
-* shared expenses
-* savings goals
-* budgets
-* financial analytics
+* track expenses
+* manage savings goals
+* define budgets
+* visualize spending analytics
 
-The system follows a **domain-driven structure** where financial data is represented through clearly defined entities and relationships.
+All financial values are stored in **MXN (Mexican Peso)**.
 
-All financial values are stored using **MXN (Mexican Peso)**.
+The system intentionally keeps the domain **simple and focused**.
 
 ---
 
 # Core Domain Entities
 
-The system is composed of the following primary entities:
+The system contains the following entities:
 
 * User
-* Account
+* AccountType
 * Category
 * Expense
 * SavingsGoal
 * SavingsContribution
 * Budget
-
-Each entity represents a financial concept used by the system.
+* RecurringExpense
 
 ---
 
 # User
 
-Represents a person who uses the system.
+Represents a user of the system.
 
-The system only supports two predefined users:
+There are only **two predefined users**.
 
-* Alan
-* Dennise
+```
+Alan
+Dennise
+```
 
-Users are seeded directly into the database.
+Users share the same financial environment.
 
 ### Fields
 
-```
-User
-```
-
-| Field        | Type        | Description        |
-| ------------ | ----------- | ------------------ |
-| id           | UUID / Long | Unique identifier  |
-| name         | String      | User display name  |
-| email        | String      | Login identifier   |
-| passwordHash | String      | Encrypted password |
-| createdAt    | Timestamp   | User creation date |
-
-### Notes
-
-* Registration is disabled.
-* Users are predefined.
-* Authentication will use stored credentials.
+| Field        | Type      | Description        |
+| ------------ | --------- | ------------------ |
+| id           | Long      | Unique identifier  |
+| name         | String    | User name          |
+| email        | String    | Login email        |
+| passwordHash | String    | Encrypted password |
+| createdAt    | Timestamp | Creation timestamp |
 
 ---
 
-# Account
+# AccountType
 
-Represents a financial source used to pay for expenses.
+Represents the type of payment method used for an expense.
 
-Supported account types:
+### Supported Types
 
-* Cash
-* Debit Card
-* Credit Card
+```
+CASH
+DEBIT
+CREDIT
+```
 
 ### Fields
 
-```
-Account
-```
-
-| Field   | Type        | Description           |
-| ------- | ----------- | --------------------- |
-| id      | UUID / Long | Unique identifier     |
-| name    | String      | Account name          |
-| type    | Enum        | CASH / DEBIT / CREDIT |
-| ownerId | User        | Owner of the account  |
-
-### Notes
-
-Accounts allow the system to track **where money comes from**.
-
-Example:
-
-Alan's Debit Card
-Dennise's Credit Card
-Shared Cash
+| Field | Type   | Description       |
+| ----- | ------ | ----------------- |
+| id    | Long   | Identifier        |
+| name  | String | Account type name |
 
 ---
 
@@ -106,97 +82,79 @@ Shared Cash
 
 Represents a spending category.
 
+Categories are **user-defined**.
+
 Examples:
 
-* Food
-* Transport
-* Entertainment
-* Subscriptions
-* Shopping
+```
+Food
+Transport
+Shopping
+Subscriptions
+Entertainment
+```
 
 ### Fields
 
-```
-Category
-```
-
-| Field     | Type        | Description             |
-| --------- | ----------- | ----------------------- |
-| id        | UUID / Long | Unique identifier       |
-| name      | String      | Category name           |
-| color     | String      | UI color representation |
-| createdAt | Timestamp   | Creation date           |
-
-### Notes
-
-Categories help analyze spending patterns.
+| Field     | Type      | Description        |
+| --------- | --------- | ------------------ |
+| id        | Long      | Identifier         |
+| name      | String    | Category name      |
+| color     | String    | Color used in UI   |
+| createdAt | Timestamp | Creation timestamp |
 
 ---
 
 # Expense
 
-Represents a financial transaction where money is spent.
-
-Expenses may be:
-
-* personal
-* shared
+Represents a financial expense.
 
 ### Fields
 
-```
-Expense
-```
+| Field         | Type        | Description                  |
+| ------------- | ----------- | ---------------------------- |
+| id            | Long        | Identifier                   |
+| title         | String      | Expense title                |
+| amount        | Decimal     | Expense amount               |
+| categoryId    | Category    | Expense category             |
+| accountTypeId | AccountType | Payment method               |
+| createdBy     | User        | User who created the expense |
+| shared        | Boolean     | Indicates shared expense     |
+| date          | Date        | Expense date                 |
+| notes         | String      | Optional notes               |
 
-| Field      | Type        | Description                   |
-| ---------- | ----------- | ----------------------------- |
-| id         | UUID / Long | Unique identifier             |
-| title      | String      | Expense description           |
-| amount     | Decimal     | Expense amount                |
-| categoryId | Category    | Spending category             |
-| accountId  | Account     | Payment source                |
-| createdBy  | User        | User who recorded the expense |
-| isShared   | Boolean     | Indicates shared expense      |
-| date       | Date        | Expense date                  |
-| notes      | String      | Optional description          |
+### Shared Expense Rule
 
-### Notes
-
-Shared expenses affect both users.
-
-Personal expenses affect only the owner.
+If `shared = true`, the expense is split **50/50** between both users.
 
 ---
 
 # SavingsGoal
 
-Represents a financial objective where users accumulate money over time.
+Represents a shared savings objective.
 
 Examples:
 
-* vacation
-* emergency fund
-* new laptop
-* car
+```
+Vacation
+Emergency Fund
+Laptop
+```
 
 ### Fields
 
-```
-SavingsGoal
-```
+| Field        | Type      | Description        |
+| ------------ | --------- | ------------------ |
+| id           | Long      | Identifier         |
+| name         | String    | Goal name          |
+| targetAmount | Decimal   | Target savings     |
+| deadline     | Date      | Optional deadline  |
+| description  | String    | Goal description   |
+| createdAt    | Timestamp | Creation timestamp |
 
-| Field         | Type        | Description          |
-| ------------- | ----------- | -------------------- |
-| id            | UUID / Long | Unique identifier    |
-| name          | String      | Goal name            |
-| targetAmount  | Decimal     | Target amount        |
-| currentAmount | Decimal     | Current saved amount |
-| deadline      | Date        | Optional deadline    |
-| createdAt     | Timestamp   | Creation date        |
+### Progress Calculation
 
-### Notes
-
-Savings goals are shared between both users.
+The progress of a goal is calculated using contributions.
 
 ---
 
@@ -208,116 +166,103 @@ Both users can contribute.
 
 ### Fields
 
-```
-SavingsContribution
-```
-
-| Field  | Type        | Description          |
-| ------ | ----------- | -------------------- |
-| id     | UUID / Long | Unique identifier    |
-| goalId | SavingsGoal | Related savings goal |
-| userId | User        | Contributor          |
-| amount | Decimal     | Contribution amount  |
-| date   | Date        | Contribution date    |
-
-### Notes
-
-The system updates the goal's `currentAmount` automatically.
+| Field  | Type        | Description         |
+| ------ | ----------- | ------------------- |
+| id     | Long        | Identifier          |
+| goalId | SavingsGoal | Related goal        |
+| userId | User        | Contributor         |
+| amount | Decimal     | Contribution amount |
+| date   | Date        | Contribution date   |
 
 ---
 
 # Budget
 
-Represents a monthly spending limit for a category.
+Budgets define spending limits.
+
+The system supports:
+
+1️⃣ Monthly global budget
+2️⃣ Category budgets
 
 ### Fields
 
+| Field       | Type     | Description       |
+| ----------- | -------- | ----------------- |
+| id          | Long     | Identifier        |
+| categoryId  | Category | Optional category |
+| limitAmount | Decimal  | Budget limit      |
+| month       | Integer  | Month             |
+| year        | Integer  | Year              |
+
+If `categoryId` is null → global monthly budget.
+
+---
+
+# RecurringExpense
+
+Represents an expense that repeats automatically.
+
+Examples:
+
 ```
-Budget
+Netflix
+Spotify
+Gym
+Internet
 ```
 
-| Field       | Type        | Description              |
-| ----------- | ----------- | ------------------------ |
-| id          | UUID / Long | Unique identifier        |
-| categoryId  | Category    | Budget category          |
-| limitAmount | Decimal     | Maximum allowed spending |
-| month       | Integer     | Month (1–12)             |
-| year        | Integer     | Budget year              |
+### Fields
 
-### Notes
-
-Budgets allow users to monitor spending limits.
-
-The system calculates:
-
-* current spending
-* remaining budget
+| Field             | Type        | Description      |
+| ----------------- | ----------- | ---------------- |
+| id                | Long        | Identifier       |
+| title             | String      | Expense title    |
+| amount            | Decimal     | Amount           |
+| categoryId        | Category    | Category         |
+| accountTypeId     | AccountType | Payment method   |
+| frequency         | Enum        | MONTHLY / WEEKLY |
+| nextExecutionDate | Date        | Next occurrence  |
 
 ---
 
 # Entity Relationships
 
-The system relationships are defined as follows:
-
 ```
 User
- ├── owns → Account
- ├── creates → Expense
- └── contributes → SavingsContribution
-
-Account
- └── used by → Expense
+ ├ creates → Expense
+ └ contributes → SavingsContribution
 
 Category
- └── classifies → Expense
+ ├ classifies → Expense
+ └ classifies → RecurringExpense
+
+AccountType
+ └ used by → Expense
 
 Expense
- └── belongs to → Category
- └── paid from → Account
+ └ belongs to → Category
 
 SavingsGoal
- └── receives → SavingsContribution
-
-SavingsContribution
- └── belongs to → SavingsGoal
+ └ receives → SavingsContribution
 
 Budget
- └── belongs to → Category
+ └ optionally belongs to → Category
+
+RecurringExpense
+ └ generates → Expense
 ```
 
 ---
 
 # Domain Rules
 
-The system must enforce the following rules:
+The system enforces the following rules:
 
-1. Only predefined users exist.
+1. Only two predefined users exist.
 2. Expenses must belong to a category.
-3. Expenses must belong to an account.
-4. Shared expenses affect both users.
-5. Savings contributions increase goal progress.
-6. Budgets are evaluated per month and category.
-
----
-
-# Financial Precision
-
-All financial values must use **decimal types** to avoid floating-point errors.
-
-Recommended database type:
-
-```
-DECIMAL(12,2)
-```
-
----
-
-# Future Domain Extensions
-
-Potential future domain extensions may include:
-
-* recurring expenses
-* subscriptions
-* debt tracking
-* bank imports
-* financial reports
+3. Expenses must have a payment method.
+4. Shared expenses are split 50/50.
+5. Savings progress is calculated from contributions.
+6. Budgets are evaluated monthly.
+7. Recurring expenses generate automatic expenses.
